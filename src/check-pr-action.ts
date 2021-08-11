@@ -34,7 +34,7 @@ import {
 
 const MAGIC_HEAD = '<!-- CHANGELOG_PREVIEW_START -->\n---\n';
 const MAGIC_TAIL = '<!-- CHANGELOG_PREVIEW_END -->';
-const MAGIC_COMMENT_REGEXP = /<!-- CHANGELOG_PREVIEW_START -->.*<!-- CHANGELOG_PREVIEW_END -->/m;
+const MAGIC_COMMENT_REGEXP = /<!-- CHANGELOG_PREVIEW_START -->(.|\n)*<!-- CHANGELOG_PREVIEW_END -->/m;
 
 // XXX: The Octokit that getOctokit returns doesn't really look anything like the 'Octokit'
 // type. I've given up trying to figure out what's going on with the types in this library
