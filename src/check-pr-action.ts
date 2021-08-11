@@ -32,7 +32,7 @@ import {
     PrInfo,
 } from './changes';
 
-const MAGIC_HEAD = '<!-- CHANGELOG_PREVIEW_START -->';
+const MAGIC_HEAD = '<!-- CHANGELOG_PREVIEW_START -->\n---\n';
 const MAGIC_TAIL = '<!-- CHANGELOG_PREVIEW_END -->';
 const MAGIC_COMMENT_REGEXP = /<!-- CHANGELOG_PREVIEW_START -->.*<!-- CHANGELOG_PREVIEW_END -->/m;
 
