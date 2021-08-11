@@ -32,7 +32,9 @@ import {
     PrInfo,
 } from './changes';
 
-const MAGIC_COMMENT = "<!-- You've found the changelog preview secret comment, congrats! -->";
+const MAGIC_HEAD = '<!-- CHANGELOG_PREVIEW_START -->';
+const MAGIC_TAIL = '<!-- CHANGELOG_PREVIEW_END -->';
+const MAGIC_COMMENT_REGEXP = /<!-- CHANGELOG_PREVIEW_START -->.*<!-- CHANGELOG_PREVIEW_END -->/m;
 
 // XXX: The Octokit that getOctokit returns doesn't really look anything like the 'Octokit'
 // type. I've given up trying to figure out what's going on with the types in this library
@@ -42,44 +44,21 @@ interface SortOfAnOctokit {
     rest: RestEndpointMethods;
 }
 
-async function findMyComment(octokit: SortOfAnOctokit): Promise<number> {
-    // You'd think we'd be able to get this from the token, but I haven't succeeded
-    const expectedUsername = core.getInput('username');
+async function updatePrBody(text: string, octokit: SortOfAnOctokit) {
+    const wrappedText = MAGIC_HEAD + text + MAGIC_TAIL;
 
-    console.log("Listing comments...");
-    const comments = await octokit.rest.issues.listComments({
+    let newBody;
+    if (github.context.payload.body.match(MAGIC_COMMENT_REGEXP)) {
+        newBody = github.context.payload.body.replace(MAGIC_COMMENT_REGEXP, wrappedText);
+    } else {
+        newBody = github.context.payload.body + "\n\n" + wrappedText;
+    }
+
+    octokit.rest.issues.update({
         ...github.context.repo,
         issue_number: github.context.payload.number,
+        body: newBody,
     });
-
-    const myComments = comments.data.filter(
-        c => c.user.login === expectedUsername && c.body?.startsWith(MAGIC_COMMENT),
-    );
-    if (myComments.length) {
-        return myComments[0].id;
-    }
-    return null;
-}
-
-async function postOrUpdateMyComment(text: string, octokit: SortOfAnOctokit) {
-    const existingCommentId = await findMyComment(octokit);
-    if (existingCommentId === null) {
-        console.log("Creating new comment...");
-        await octokit.rest.issues.createComment({
-            ...github.context.repo,
-            issue_number: github.context.payload.number,
-            // Need a newline at the end, otherwise github ignores markdown in the text
-            // it doesn't show up as a blank line
-            body: MAGIC_COMMENT + "\n" + text,
-        });
-    } else {
-        console.log(`Updating comment ${existingCommentId}...`);
-        await octokit.rest.issues.updateComment({
-            ...github.context.repo,
-            comment_id: existingCommentId,
-            body: MAGIC_COMMENT + "\n" + text,
-        });
-    }
 }
 
 function hasLabel(label: string, pr: PrInfo): boolean {
@@ -196,7 +175,7 @@ async function main() {
             lines.push(entry);
         }
 
-        postOrUpdateMyComment(lines.join("\n"), octokit);
+        updatePrBody(lines.join("\n"), octokit);
     } catch (error) {
         console.error(error);
         core.setFailed(error.message);
