@@ -49,9 +49,9 @@ async function updatePrBody(pr: PrInfo, text: string, octokit: SortOfAnOctokit) 
 
     let newBody;
     if (pr.body?.match(MAGIC_COMMENT_REGEXP)) {
-        newBody = github.context.payload.body.replace(MAGIC_COMMENT_REGEXP, wrappedText);
+        newBody = pr.body.replace(MAGIC_COMMENT_REGEXP, wrappedText);
     } else {
-        newBody = github.context.payload.body + "\n\n" + wrappedText;
+        newBody = (pr.body || '') + "\n\n" + wrappedText;
     }
 
     octokit.rest.issues.update({
