@@ -44,11 +44,11 @@ interface SortOfAnOctokit {
     rest: RestEndpointMethods;
 }
 
-async function updatePrBody(text: string, octokit: SortOfAnOctokit) {
+async function updatePrBody(pr: PrInfo, text: string, octokit: SortOfAnOctokit) {
     const wrappedText = MAGIC_HEAD + text + MAGIC_TAIL;
 
     let newBody;
-    if (github.context.payload.body.match(MAGIC_COMMENT_REGEXP)) {
+    if (pr.body?.match(MAGIC_COMMENT_REGEXP)) {
         newBody = github.context.payload.body.replace(MAGIC_COMMENT_REGEXP, wrappedText);
     } else {
         newBody = github.context.payload.body + "\n\n" + wrappedText;
@@ -175,7 +175,7 @@ async function main() {
             lines.push(entry);
         }
 
-        updatePrBody(lines.join("\n"), octokit);
+        updatePrBody(pr, lines.join("\n"), octokit);
     } catch (error) {
         console.error(error);
         core.setFailed(error.message);
